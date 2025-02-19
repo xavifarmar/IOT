@@ -8,7 +8,7 @@ from connection import connect_to_influxdb, write_to_influxdb
 client = connect_to_influxdb()
 
 #Crear temperatura del termometro
-def temperature_sensor():
+def temperature_sensor(client):
     """Simula los datos que proporciona un termometro en grados Celsius cada segundo
         y los envia a influxDB """
     

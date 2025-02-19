@@ -8,7 +8,7 @@ from connection import connect_to_influxdb, write_to_influxdb
 client = connect_to_influxdb()
 
 # Función para simular la lectura de humedad
-def humidity_sensor():
+def humidity_sensor(client):
     
     while True:
         humidity = random.uniform(40, 70)  # Humedad entre 40% y 70%
