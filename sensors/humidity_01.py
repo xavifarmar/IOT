@@ -11,7 +11,7 @@ client = connect_to_influxdb()
 def humidity_sensor(client):
     
     while True:
-        humidity = random.uniform(40, 70)  # Humedad entre 40% y 70%
+        humidity = random.randint(40, 70)  # Humedad entre 40% y 70%
 
         timestamp = int(time.time() * 1000)  #Tiempo en milisegundos
         timeactual = time.time()
@@ -24,6 +24,6 @@ def humidity_sensor(client):
             print(f"No ha sido posible enviar los datos a influxDB {e}")
     
         
-        print(f"Humedad: {humidity}% | {current_time}")
+        print(f"Humedad: {humidity} % | {current_time}")
         
         time.sleep(1)
