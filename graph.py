@@ -74,5 +74,5 @@ def plot_realtime_data():
     ani = FuncAnimation(fig, update, interval=5000)  # Actualiza cada 5 segundos
     plt.show()
 
-if __name__ == "__main__":
-    plot_realtime_data()
+
+plot_realtime_data()
