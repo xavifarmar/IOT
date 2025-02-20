@@ -1,6 +1,12 @@
 import os
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 
+class InfluxDBConnection:
+    def __init__(self, url, token, org, bucket):
+        self.url = url
+        self.token = token
+        self.org = org
+        self.bucket = bucket
 
 # Conectar a InfluxDB
 def connect_to_influxdb():

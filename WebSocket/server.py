@@ -1,7 +1,7 @@
 import asyncio
 import websockets
 import pandas as pd
-from connection_component import InfluxDBConnection
+from connection import InfluxDBConnection
 
 async def send_temperature_data(websocket):
 
