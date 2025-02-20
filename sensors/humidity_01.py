@@ -26,4 +26,4 @@ def humidity_sensor(client):
         
         print(f"Humedad: {humidity} % | {current_time}")
         
-        time.sleep(1)
+        time.sleep(5)

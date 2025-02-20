@@ -27,5 +27,5 @@ def temperature_sensor(client):
             print(f"No ha sido posible enviar los datos a influxDB {e}")
 
         print(f"Temperatura: {thermometer_data}Cº | {current_time}")
-        time.sleep(1)
+        time.sleep(5)
         

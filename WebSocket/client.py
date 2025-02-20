@@ -2,11 +2,11 @@ import asyncio
 import websockets
 
 async def receive_data():
-    uri = "ws://10.0.2.15:8765"  # Cambia la IP al servidor WebSocket
-    
 
-    async with websockets.connect(uri) as websocket:
-        print("Conectado al servidor WebSocket")
+    direction = "10.0.2.15:8765"
+
+    async with websockets.connect(direction) as websocket:
+        print(f"Conectado al servidor WebSocket: {direction}")
         try:
             while True:
                 message = await websocket.recv()
