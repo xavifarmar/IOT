@@ -1,19 +1,16 @@
 import asyncio
 import websockets
 import pandas as pd
-from connection_component import InfluxDBConnection
+from connection import connect_to_influxdb
 
+
+client = connect_to_influxdb()
 async def control_actuators(websocket):
     """Activa o desactiva actuadores en función de los datos de los sensores."""
-    connection = InfluxDBConnection(
-        url="http://localhost:8086",
-        token="Obzc66q1bvHbtsbH1claJPfnhcrGV51-P9cCf-1RNE5zcuR4z0XX1z-3N3_YI6kVIJwtS6bTmlCKUbMLGZIraA==",
-        org="xfm",
-        bucket="farm_iot"
-    )
+    
 
-    client = connection.get_client()
-    query_api = connection.get_query_api(client)
+    client = client.get_client()
+    query_api = client.get_query_api(client)
 
     last_timestamp = None  # Almacena el último timestamp enviado
 

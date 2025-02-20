@@ -11,7 +11,7 @@ client = connect_to_influxdb()
 def get_sensor_data(client):
     
     """Recupera los datos de temperatura y humedad de los últimos 10 minutos."""
-    query_api = connect_to_influxdb.get_query_api(client)
+    query_api = client.get_query_api(client)
 
     query = f'''
     from(bucket: "{"farm_iot"}")

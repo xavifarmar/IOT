@@ -1,21 +1,6 @@
 import os
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 
-class InfluxDBConnection:
-    def __init__(self, url, token, org, bucket):
-        self.url = url
-        self.token = token
-        self.org = org
-        self.bucket = bucket
-
-def get_client(self):
-        """Devuelve una instancia del cliente de InfluxDB."""
-        return InfluxDBClient(url=self.url, token=self.token, org=self.org)
-
-def get_query_api(self, client):
-    """Obtiene la API de consulta."""
-    return client.query_api()
-
 # Conectar a InfluxDB
 def connect_to_influxdb():
     client = InfluxDBClient(
