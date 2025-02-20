@@ -1,21 +1,20 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from connection import InfluxDBConnection
+from connection import connect_to_influxdb
 
-def get_sensor_data():
+
+client = connect_to_influxdb()
+
+# Función para simular la lectura de humedad
+
+def get_sensor_data(client):
+    
     """Recupera los datos de temperatura y humedad de los últimos 10 minutos."""
-    connection = InfluxDBConnection(
-        url="http://10.0.2.15:8086",
-        token="Obzc66q1bvHbtsbH1claJPfnhcrGV51-P9cCf-1RNE5zcuR4z0XX1z-3N3_YI6kVIJwtS6bTmlCKUbMLGZIraA==",
-        org="xfm",
-        bucket="xfm"
-    )
-    client = connection.get_client()
-    query_api = connection.get_query_api(client)
+    query_api = connect_to_influxdb.get_query_api(client)
 
     query = f'''
-    from(bucket: "{connection.bucket}")
+    from(bucket: "{"farm_iot"}")
         |> range(start: -10m)
         |> filter(fn: (r) => r._measurement == "temperature_sensor" and r._field == "value")
         |> filter(fn: (r) => r._measurement == "humidity_sensor" and r._field == "value")
