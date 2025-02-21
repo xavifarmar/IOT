@@ -30,3 +30,4 @@ def read_last_temperature():
 
 if __name__ == "__main__":
     read_last_temperature()
+

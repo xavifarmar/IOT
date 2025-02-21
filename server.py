@@ -2,86 +2,108 @@ import asyncio
 import websockets
 import pandas as pd
 from connection import connect_to_influxdb
+import warnings
+from influxdb_client.client.warnings import MissingPivotFunction
 
-# Función para enviar datos de temperatura en tiempo real
+# Deshabilitar advertencias de PivotFunction de InfluxDB
+warnings.simplefilter("ignore", MissingPivotFunction)
+
+# Función para enviar datos de temperatura y humedad en tiempo real
 async def send_temperature_data(websocket, client):
-    """Envía datos de temperatura en tiempo real a los clientes conectados."""
+    """Envía datos de temperatura y humedad en tiempo real a los clientes conectados."""
 
-    # Enviar un mensaje de bienvenida cuando un cliente se conecta
     print("Cliente conectado.")
     await websocket.send("Bienvenido al servidor de datos IoT. Recibiendo datos de temperatura y humedad.")
 
-    # Asegúrate de que 'client' sea el objeto correcto de InfluxDBClient
-    query_api = client.query_api()  # Obtén el query_api correctamente
-
-    last_timestamp = None  # Almacena el último timestamp enviado
+    query_api = client.query_api()
+    last_timestamp = None
 
     try:
         while True:
-            # Consulta los últimos datos de temperatura con pivot()
+            # Consulta los últimos datos de temperatura
             query_temp = f'''
             from(bucket: "farm_iot")
                 |> range(start: -10s)
                 |> filter(fn: (r) => r["_measurement"] == "temperature_sensor")
                 |> filter(fn: (r) => r["_field"] == "value")
-                |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
             '''
             tables_temp = query_api.query_data_frame(query_temp)
+           # print("Datos de temperatura crudos:", tables_temp)  # Depuración
 
-            # Consulta los últimos datos de humedad con pivot()
-            query_hum = f'''
-            from(bucket: "farm_iot")
-                |> range(start: -10s)
-                |> filter(fn: (r) => r["_measurement"] == "humidity_sensor")
-                |> filter(fn: (r) => r["_field"] == "value")
-                |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
-            '''
-            tables_hum = query_api.query_data_frame(query_hum)
+            if tables_temp.empty:
+                print("No hay datos de temperatura en el rango de tiempo especificado.")
+            else:
+                print("Datos de temperatura encontrados.")
 
-            # Verificar si las columnas están presentes antes de acceder a ellas
-            if not tables_temp.empty:
-                # Comprueba las columnas y usa el nombre correcto
-                if 'Time' in tables_temp.columns and 'temperature_sensor' in tables_temp.columns:
-                    df_temp = tables_temp[['Time', 'temperature_sensor']]
-                    df_temp['Time'] = pd.to_datetime(df_temp['Time'])
+                if '_start' in tables_temp.columns and '_value' in tables_temp.columns:
+                    # Crear un nuevo DataFrame para evitar problemas de copia
+                    df_temp = tables_temp[['_start', '_value']].copy()
+                    df_temp.loc[:, '_start'] = pd.to_datetime(df_temp['_start'])
+                    df_temp.rename(columns={'_start': 'Time', '_value': 'temperature'}, inplace=True)
 
-                    # Evitar que se envíen datos con el mismo timestamp
                     if last_timestamp is None:
                         new_data_temp = df_temp
                     else:
                         new_data_temp = df_temp[df_temp['Time'] > last_timestamp]
 
-                    if not new_data_temp.empty:
+                    if new_data_temp.empty:
+                        print("No hay datos nuevos de temperatura para enviar.")
+                    else:
+                        # print(f"Datos nuevos de temperatura encontrados: {len(new_data_temp)} registros.")
                         last_timestamp = new_data_temp['Time'].max()
-                        # Enviar datos nuevos de temperatura
                         for _, row in new_data_temp.iterrows():
-                            await websocket.send(
-                                f"Tiempo: {row['Time']}, Temperatura: {row['temperature_sensor']}°C"
-                            )
-                        print( f"Tiempo: {row['Time']}, Temperatura: {row['temperature_sensor']}°C")
-            if not tables_hum.empty:
-                # Comprueba las columnas y usa el nombre correcto
-                if 'Time' in tables_hum.columns and 'humidity_sensor' in tables_hum.columns:
-                    df_hum = tables_hum[['Time', 'humidity_sensor']]
-                    df_hum['Time'] = pd.to_datetime(df_hum['Time'])
+                            print(f"Enviando datos de temperatura: Tiempo: {row['Time']}, Temperatura: {row['temperature']}°C")
+                            await websocket.send(f"Tiempo: {row['Time']}, Temperatura: {row['temperature']}°C")
+                else:
+                    print("Columnas '_start' y '_value' no encontradas en los datos de temperatura.")
+                    print("Columnas disponibles:", tables_temp.columns)
 
-                    # Evitar que se envíen datos con el mismo timestamp
+            # Consulta los últimos datos de humedad
+            query_hum = f'''
+            from(bucket: "farm_iot")
+                |> range(start: -10s)
+                |> filter(fn: (r) => r["_measurement"] == "humidity_sensor")
+                |> filter(fn: (r) => r["_field"] == "value")
+            '''
+            tables_hum = query_api.query_data_frame(query_hum)
+           # print("Datos de humedad crudos:", tables_hum)  # Depuración
+
+            if tables_hum.empty:
+              print("No hay datos de humedad en el rango de tiempo especificado.")
+            else:
+                #print("Datos de humedad encontrados.")
+
+                if '_start' in tables_hum.columns and '_value' in tables_hum.columns:
+                    # print("Columnas '_start' y '_value' encontradas en los datos de humedad.")
+                    # Crear un nuevo DataFrame para evitar problemas de copia
+                    df_hum = tables_hum[['_start', '_value']].copy()
+                    df_hum.loc[:, '_start'] = pd.to_datetime(df_hum['_start'])
+                    df_hum.rename(columns={'_start': 'Time', '_value': 'humidity'}, inplace=True)
+
                     if last_timestamp is None:
+                       # print("Primera consulta, enviando todos los datos de humedad.")
                         new_data_hum = df_hum
                     else:
+                       # print(f"Filtrando datos de humedad con timestamp mayor a: {last_timestamp}")
                         new_data_hum = df_hum[df_hum['Time'] > last_timestamp]
 
-                    if not new_data_hum.empty:
+                    if new_data_hum.empty:
+                        print("No hay datos nuevos de humedad para enviar.")
+                    else:
+                      #  print(f"Datos nuevos de humedad encontrados: {len(new_data_hum)} registros.")
                         last_timestamp = new_data_hum['Time'].max()
-                        # Enviar datos nuevos de humedad
                         for _, row in new_data_hum.iterrows():
-                            await websocket.send(
-                                f"Tiempo: {row['Time']}, Humedad: {row['humidity_sensor']}%"
-                            )
-                    print(f"Tiempo: {row['Time']}, Humedad: {row['humidity_sensor']}%")
+                            print(f"Enviando datos de humedad: Tiempo: {row['Time']}, Humedad: {row['humidity']}%")
+                            await websocket.send(f"Tiempo: {row['Time']}, Humedad: {row['humidity']}%")
+                else:
+                    print("Columnas '_start' y '_value' no encontradas en los datos de humedad.")
+                    print("Columnas disponibles:", tables_hum.columns)
+
             await asyncio.sleep(5)  # Pausa entre consultas
     except websockets.exceptions.ConnectionClosed:
         print("Conexión cerrada con el cliente.")
+    except Exception as e:
+        print(f"Error inesperado: {e}")
 
 # Configurar el servidor WebSocket
 async def main():
