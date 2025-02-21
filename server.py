@@ -54,6 +54,13 @@ async def send_temperature_data(websocket, client):
                         for _, row in new_data_temp.iterrows():
                             print(f"Enviando datos de temperatura: Tiempo: {row['Time']}, Temperatura: {row['temperature']}°C")
                             await websocket.send(f"Tiempo: {row['Time']}, Temperatura: {row['temperature']}°C")
+
+                            # Verificar si la temperatura es mayor a 30°C y enviar una alerta
+                            if row['temperature'] > 30:
+                                alert_message = f"ALERTA: La temperatura ha superado los 30°C. Actual: {row['temperature']}°C"
+                                print(alert_message)
+                                await websocket.send(alert_message)
+
                 else:
                     print("Columnas '_start' y '_value' no encontradas en los datos de temperatura.")
                     print("Columnas disponibles:", tables_temp.columns)
@@ -74,27 +81,29 @@ async def send_temperature_data(websocket, client):
                 #print("Datos de humedad encontrados.")
 
                 if '_start' in tables_hum.columns and '_value' in tables_hum.columns:
-                    # print("Columnas '_start' y '_value' encontradas en los datos de humedad.")
                     # Crear un nuevo DataFrame para evitar problemas de copia
                     df_hum = tables_hum[['_start', '_value']].copy()
                     df_hum.loc[:, '_start'] = pd.to_datetime(df_hum['_start'])
                     df_hum.rename(columns={'_start': 'Time', '_value': 'humidity'}, inplace=True)
 
                     if last_timestamp is None:
-                       # print("Primera consulta, enviando todos los datos de humedad.")
                         new_data_hum = df_hum
                     else:
-                       # print(f"Filtrando datos de humedad con timestamp mayor a: {last_timestamp}")
                         new_data_hum = df_hum[df_hum['Time'] > last_timestamp]
 
                     if new_data_hum.empty:
                         print("No hay datos nuevos de humedad para enviar.")
                     else:
-                      #  print(f"Datos nuevos de humedad encontrados: {len(new_data_hum)} registros.")
                         last_timestamp = new_data_hum['Time'].max()
                         for _, row in new_data_hum.iterrows():
                             print(f"Enviando datos de humedad: Tiempo: {row['Time']}, Humedad: {row['humidity']}%")
                             await websocket.send(f"Tiempo: {row['Time']}, Humedad: {row['humidity']}%")
+
+                            # Verificar si la humedad es mayor a 70% y enviar una alerta
+                            if row['humidity'] > 70:
+                                alert_message = f"ALERTA: La humedad ha superado el 70%. Actual: {row['humidity']}%"
+                                await websocket.send(alert_message)
+
                 else:
                     print("Columnas '_start' y '_value' no encontradas en los datos de humedad.")
                     print("Columnas disponibles:", tables_hum.columns)
