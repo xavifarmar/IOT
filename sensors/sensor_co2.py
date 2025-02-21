@@ -34,5 +34,3 @@ def co2_sensor(client):
         print(f"CO2: {co2_data} ppm | {current_time}")
         time.sleep(5)
 
-# Ejecutar simulación de sensores
-co2_sensor(client)
