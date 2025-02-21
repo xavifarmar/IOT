@@ -1,7 +1,7 @@
 import threading
 from connection import connect_to_influxdb
 from sensors.thermo_01 import temperature_sensor
-from sensors.thermo_02 import temperature_sensor
+from sensors.sensor_co2 import co2_sensor
 from sensors.humidity_01 import humidity_sensor
 
 
@@ -11,7 +11,7 @@ def main():
     
     # Crear hilos para cada sensor
     thread_1 = threading.Thread(target=temperature_sensor, args=(client,))
-    thread_2 = threading.Thread(target=temperature_sensor, args=(client,))
+    thread_2 = threading.Thread(target=co2_sensor, args=(client,))
     thread_3 = threading.Thread(target=humidity_sensor, args=(client,))
 
     # Iniciar los hilos

@@ -9,12 +9,14 @@ client = connect_to_influxdb()
 
 #Crear temperatura del termometro
 def temperature_sensor(client):
+    
+    thermometer_data = float(24)
     """Simula los datos que proporciona un termometro en grados Celsius cada segundo
         y los envia a influxDB """
     
     while True:
 
-        thermometer_data = random.randint(15, 35)
+        thermometer_data += float(random.uniform(-0.8, 0.8))
         
         timestamp = int(time.time() * 1000) #Tiempo en milisegundos
         timeactual = time.time()
